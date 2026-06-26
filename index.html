@@ -1,0 +1,611 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #07070f;
+    color: #e8e8e0;
+    font-family: 'Courier New', monospace;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  #cursor {
+    position: fixed;
+    width: 32px;
+    height: 32px;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+  }
+
+  .bullet {
+    position: fixed;
+    width: 6px;
+    height: 2px;
+    background: #f5c842;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  canvas#bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    opacity: 0.15;
+  }
+
+  .content {
+    position: relative;
+    z-index: 10;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 32px 80px;
+  }
+
+  /* ── NEON TEXT ENGINE ── */
+
+  .neon-tag {
+    display: block;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    color: #f5c842;
+    text-shadow:
+      0 0 4px #f5c842,
+      0 0 10px #f5c842,
+      0 0 22px #f5c842cc,
+      0 0 40px #f5c84288;
+    animation: neon-flicker-slow 9s infinite;
+  }
+
+  .neon-h1 {
+    font-family: 'Courier New', monospace;
+    font-size: clamp(30px, 5.5vw, 54px);
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: center;
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+    color: #ffffff;
+    text-shadow:
+      0 0 4px #fff,
+      0 0 12px #fff8,
+      0 0 28px #aaddff88,
+      0 0 50px #6699ff44;
+    animation: neon-flicker-main 12s infinite;
+  }
+
+  .neon-h1 .gold {
+    color: #f5c842;
+    text-shadow:
+      0 0 4px #f5c842,
+      0 0 14px #f5c842cc,
+      0 0 30px #f5c84288,
+      0 0 55px #f5c84244;
+    animation: neon-flicker-gold 7s infinite;
+  }
+
+  .neon-sub {
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 50px;
+    color: #cc44ff;
+    text-shadow:
+      0 0 4px #cc44ff,
+      0 0 12px #cc44ffaa,
+      0 0 25px #cc44ff66;
+    animation: neon-flicker-purple 11s infinite;
+  }
+
+  .neon-body {
+    color: #c8ffc8;
+    text-shadow:
+      0 0 3px #44ff88,
+      0 0 8px #44ff8888,
+      0 0 18px #44ff8844;
+    animation: neon-flicker-green 15s infinite;
+  }
+
+  .neon-highlight {
+    color: #f5c842;
+    text-shadow:
+      0 0 4px #f5c842,
+      0 0 12px #f5c842cc,
+      0 0 24px #f5c84277;
+    animation: neon-flicker-gold 5s infinite;
+    font-weight: 700;
+  }
+
+  .neon-ray {
+    text-align: center;
+    font-size: 12px;
+    color: #ff6644;
+    letter-spacing: 4px;
+    margin: 36px 0 28px;
+    text-transform: uppercase;
+    text-shadow:
+      0 0 4px #ff6644,
+      0 0 14px #ff664488,
+      0 0 28px #ff664444;
+    animation: neon-flicker-red 6s infinite;
+  }
+
+  .neon-label {
+    color: #44ccff;
+    text-shadow:
+      0 0 4px #44ccff,
+      0 0 12px #44ccffaa,
+      0 0 22px #44ccff55;
+    animation: neon-flicker-blue 8s infinite;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .neon-amount {
+    color: #f5c842;
+    font-weight: 700;
+    font-size: 15px;
+    text-shadow:
+      0 0 5px #f5c842,
+      0 0 14px #f5c842cc,
+      0 0 28px #f5c84288;
+    animation: neon-flicker-gold 4s infinite;
+  }
+
+  .neon-val {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow:
+      0 0 4px #fff,
+      0 0 12px #aaddff88;
+    animation: neon-flicker-main 10s infinite;
+    display: block;
+  }
+
+  .neon-r-title-green {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    color: #44ff88;
+    text-shadow:
+      0 0 4px #44ff88,
+      0 0 12px #44ff8888;
+    animation: neon-flicker-green 9s infinite;
+  }
+
+  .neon-r-title-red {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    color: #ff4444;
+    text-shadow:
+      0 0 4px #ff4444,
+      0 0 12px #ff444488;
+    animation: neon-flicker-red 7s infinite;
+  }
+
+  .neon-item-green {
+    color: #a8ffc8;
+    text-shadow: 0 0 6px #44ff8866;
+    font-size: 12px;
+    animation: neon-flicker-green 13s infinite;
+  }
+
+  .neon-item-red {
+    color: #ffa8a8;
+    text-shadow: 0 0 6px #ff444466;
+    font-size: 12px;
+    animation: neon-flicker-red 11s infinite;
+  }
+
+  .neon-ch-text {
+    color: #c8c8ff;
+    text-shadow:
+      0 0 4px #8888ff,
+      0 0 12px #8888ff88;
+    font-size: 13px;
+    letter-spacing: 1px;
+    animation: neon-flicker-purple 10s infinite;
+  }
+
+  .neon-footer {
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #888840;
+    text-shadow:
+      0 0 4px #f5c84244,
+      0 0 10px #f5c84222;
+    animation: neon-flicker-slow 20s infinite;
+  }
+
+  .neon-day {
+    color: #f5c842;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-shadow:
+      0 0 4px #f5c842,
+      0 0 10px #f5c842aa;
+    animation: neon-flicker-gold 6s infinite;
+    display: block;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  /* ── FLICKER KEYFRAMES — each independent, desynchronised ── */
+
+  @keyframes neon-flicker-main {
+    0%,100% { opacity:1; }
+    4% { opacity:0.92; }
+    8% { opacity:1; }
+    15% { opacity:0.95; }
+    30% { opacity:1; }
+    52% { opacity:1; }
+    53% { opacity:0.5; }
+    54% { opacity:1; }
+    75% { opacity:0.97; }
+    77% { opacity:0.6; }
+    78% { opacity:1; }
+  }
+
+  @keyframes neon-flicker-gold {
+    0%,100% { opacity:1; }
+    10% { opacity:0.88; }
+    11% { opacity:1; }
+    35% { opacity:1; }
+    36% { opacity:0.4; }
+    37% { opacity:1; }
+    60% { opacity:0.95; }
+    80% { opacity:1; }
+    81% { opacity:0.7; }
+    82% { opacity:0.9; }
+    83% { opacity:1; }
+  }
+
+  @keyframes neon-flicker-green {
+    0%,100% { opacity:1; }
+    20% { opacity:0.9; }
+    21% { opacity:0.3; }
+    22% { opacity:1; }
+    55% { opacity:0.95; }
+    70% { opacity:1; }
+    71% { opacity:0.6; }
+    72% { opacity:1; }
+  }
+
+  @keyframes neon-flicker-purple {
+    0%,100% { opacity:1; }
+    5% { opacity:0.7; }
+    6% { opacity:1; }
+    40% { opacity:0.9; }
+    41% { opacity:0.5; }
+    42% { opacity:1; }
+    85% { opacity:0.95; }
+    86% { opacity:0.3; }
+    87% { opacity:1; }
+  }
+
+  @keyframes neon-flicker-red {
+    0%,100% { opacity:1; }
+    25% { opacity:1; }
+    26% { opacity:0.4; }
+    27% { opacity:1; }
+    50% { opacity:0.85; }
+    65% { opacity:1; }
+    90% { opacity:0.6; }
+    91% { opacity:1; }
+  }
+
+  @keyframes neon-flicker-blue {
+    0%,100% { opacity:1; }
+    18% { opacity:0.8; }
+    19% { opacity:1; }
+    45% { opacity:1; }
+    46% { opacity:0.35; }
+    47% { opacity:1; }
+    73% { opacity:0.9; }
+  }
+
+  @keyframes neon-flicker-slow {
+    0%,100% { opacity:1; }
+    33% { opacity:0.85; }
+    67% { opacity:0.9; }
+    68% { opacity:0.5; }
+    69% { opacity:1; }
+  }
+
+  /* ── LAYOUT ── */
+
+  .story-block {
+    background: #0a0a14;
+    border-left: 2px solid #44ff8855;
+    padding: 24px 28px;
+    margin-bottom: 32px;
+    font-size: 14px;
+    line-height: 1.9;
+  }
+
+  .story-block p { margin-bottom: 12px; }
+  .story-block p:last-child { margin-bottom: 0; }
+
+  .progress-section {
+    background: #0a0a14;
+    border: 1px solid #1e1e30;
+    padding: 28px;
+    margin-bottom: 32px;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .progress-bar-bg {
+    background: #12122a;
+    height: 8px;
+    width: 100%;
+    margin-bottom: 6px;
+  }
+
+  .progress-bar-fill {
+    background: #f5c842;
+    height: 8px;
+    width: 0%;
+    transition: width 2s cubic-bezier(0.22,1,0.36,1);
+    box-shadow: 0 0 10px #f5c842, 0 0 20px #f5c84266;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+
+  .progress-meta .stat { text-align: center; font-size: 11px; }
+
+  .mission-line {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-align: center;
+    margin-top: 8px;
+    color: #555550;
+    text-transform: uppercase;
+  }
+
+  .rule-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .rule-card {
+    background: #0a0a14;
+    border: 1px solid #1e1e30;
+    padding: 16px 18px;
+  }
+
+  .rule-card .item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .rule-card .item:last-child { margin-bottom: 0; }
+
+  .channels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .ch-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px;
+    background: #0a0a14;
+    border: 1px solid #2a2a44;
+    text-decoration: none;
+    cursor: none;
+    transition: border-color 0.3s;
+  }
+
+  .ch-btn:hover { border-color: #8888ff88; }
+  .ch-btn:hover .neon-ch-text {
+    text-shadow: 0 0 6px #8888ff, 0 0 18px #8888ffaa, 0 0 30px #8888ff66;
+  }
+
+  .ch-btn .icon { width: 20px; height: 20px; fill: currentColor; }
+
+  .footer-divider {
+    border: none;
+    border-top: 1px solid #1a1a28;
+    margin-bottom: 24px;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<svg id="cursor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <filter id="glow">
+    <feGaussianBlur stdDeviation="1.5" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <g transform="translate(4,8)" filter="url(#glow)">
+    <rect x="0" y="7" width="18" height="8" rx="2" fill="#d0d0c8"/>
+    <rect x="14" y="9" width="8" height="4" rx="1" fill="#a0a098"/>
+    <rect x="5" y="4" width="4" height="5" rx="1" fill="#a0a098"/>
+    <rect x="2" y="10" width="3" height="6" rx="1" fill="#808078"/>
+  </g>
+</svg>
+
+<div class="content">
+
+  <span class="neon-day">Day 1 — Mission Start</span>
+  <div class="neon-tag">Los Santos Chronicle</div>
+
+  <h1 class="neon-h1">Life of a <span class="gold">GTA</span><br>Shopkeeper</h1>
+  <p class="neon-sub">One shift. One story. Every day.</p>
+
+  <div class="story-block">
+    <p class="neon-body">There's a man in his 20s. The world around him moves at a speed he can barely track.</p>
+    <p class="neon-body"><span class="neon-highlight">Tech giants rising. AI exploding. Everyone moving forward.</span> And him — standing still, watching it all blur past.</p>
+    <p class="neon-body">He works a full-time job. He comes home tired. He has nothing but evenings, ideas, and a laptop.</p>
+    <p class="neon-body">So he decided to run an experiment. Can <span class="neon-highlight">AI + programming + creativity</span> earn ₹65,000 — enough to buy a PS5 — before GTA VI launches? Without touching his salary. Without loans. Without shortcuts.</p>
+    <p class="neon-body">Everything public. Every rupee tracked. Every lesson shared.</p>
+  </div>
+
+  <div class="neon-ray">⚡ &nbsp; A ray of hope &nbsp; ⚡</div>
+
+  <div class="progress-section">
+    <div class="progress-label">
+      <span class="neon-label">Mission Progress</span>
+      <span class="neon-amount">₹0 / ₹65,000</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="pbar"></div>
+    </div>
+    <p class="mission-line">0% complete — the journey begins</p>
+    <div class="progress-meta">
+      <div class="stat"><span class="neon-val">1</span><span class="neon-label" style="font-size:10px">Day</span></div>
+      <div class="stat"><span class="neon-val">0</span><span class="neon-label" style="font-size:10px">Episodes</span></div>
+      <div class="stat"><span class="neon-val">0</span><span class="neon-label" style="font-size:10px">Subscribers</span></div>
+      <div class="stat"><span class="neon-val">₹0</span><span class="neon-label" style="font-size:10px">Earned</span></div>
+    </div>
+  </div>
+
+  <div class="rule-grid">
+    <div class="rule-card">
+      <div class="neon-r-title-green">✓ Allowed</div>
+      <div class="item"><span class="neon-item-green">▸ AI tools</span></div>
+      <div class="item"><span class="neon-item-green">▸ Programming</span></div>
+      <div class="item"><span class="neon-item-green">▸ Creativity</span></div>
+      <div class="item"><span class="neon-item-green">▸ Websites</span></div>
+      <div class="item"><span class="neon-item-green">▸ Affiliate income</span></div>
+      <div class="item"><span class="neon-item-green">▸ Ad revenue</span></div>
+    </div>
+    <div class="rule-card">
+      <div class="neon-r-title-red">✗ Not Allowed</div>
+      <div class="item"><span class="neon-item-red">▸ Salary money</span></div>
+      <div class="item"><span class="neon-item-red">▸ Loans</span></div>
+      <div class="item"><span class="neon-item-red">▸ Investments</span></div>
+    </div>
+  </div>
+
+  <div class="channels">
+    <a class="ch-btn" href="https://www.youtube.com/@TheGTAShopkeeper" target="_blank">
+      <svg class="icon neon-ch-text" viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.75 15.5V8.5l6.25 3.5-6.25 3.5z"/></svg>
+      <span class="neon-ch-text">YouTube</span>
+    </a>
+    <a class="ch-btn" href="https://www.instagram.com/TheGTAShopkeeper" target="_blank">
+      <svg class="icon neon-ch-text" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+      <span class="neon-ch-text">Instagram</span>
+    </a>
+  </div>
+
+  <hr class="footer-divider">
+  <p class="neon-footer">Every rupee earned. In public. No shortcuts.</p>
+
+</div>
+
+<script>
+  const cursor = document.getElementById('cursor');
+  const canvas = document.getElementById('bg');
+  const ctx = canvas.getContext('2d');
+
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  let mx = 400, my = 300;
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx + 'px';
+    cursor.style.top = my + 'px';
+  });
+
+  const bullets = [];
+  document.addEventListener('click', e => {
+    for (let i = 0; i < 5; i++) {
+      const el = document.createElement('div');
+      el.className = 'bullet';
+      el.style.left = mx + 'px';
+      el.style.top = my + 'px';
+      const angle = (Math.random() - 0.5) * 0.5;
+      const speed = 14 + Math.random() * 10;
+      document.body.appendChild(el);
+      bullets.push({ el, x: mx, y: my, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 1.5, life: 1 });
+    }
+  });
+
+  function animateBullets() {
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      const b = bullets[i];
+      b.x += b.vx; b.y += b.vy; b.vy += 0.3; b.life -= 0.045;
+      b.el.style.left = b.x + 'px'; b.el.style.top = b.y + 'px';
+      b.el.style.opacity = b.life;
+      b.el.style.boxShadow = `0 0 6px #f5c842`;
+      const angle = Math.atan2(b.vy, b.vx) * 180 / Math.PI;
+      b.el.style.transform = `rotate(${angle}deg)`;
+      if (b.life <= 0) { b.el.remove(); bullets.splice(i, 1); }
+    }
+    requestAnimationFrame(animateBullets);
+  }
+  animateBullets();
+
+  const particles = [];
+  for (let i = 0; i < 55; i++) {
+    particles.push({
+      x: Math.random() * 1400, y: Math.random() * 900,
+      vx: (Math.random() - 0.5) * 0.6, vy: -0.15 - Math.random() * 0.35,
+      size: Math.random() * 1.8 + 0.4,
+      alpha: Math.random() * 0.5 + 0.15,
+      color: ['#f5c842','#44ccff','#cc44ff','#44ff88'][Math.floor(Math.random()*4)]
+    });
+  }
+
+  function drawBg() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#181830'; ctx.lineWidth = 0.5;
+    const gs = 60;
+    for (let x = 0; x < canvas.width; x += gs) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
+    for (let y = 0; y < canvas.height; y += gs) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); }
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.y < -10) { p.y = canvas.height + 10; p.x = Math.random() * canvas.width; }
+      if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+      ctx.fillStyle = p.color; ctx.globalAlpha = p.alpha; ctx.fill(); ctx.globalAlpha = 1;
+    });
+    requestAnimationFrame(drawBg);
+  }
+  drawBg();
+
+  setTimeout(() => { document.getElementById('pbar').style.width = '0.1%'; }, 500);
+</script>
+</body>
+</html>
